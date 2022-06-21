@@ -16,10 +16,20 @@ namespace KolosTemplate.Controller {
             _dbService = dbService;
         }
 
-        [HttpGet("/{CarId}")]
-        public async Task<Result1DTO> GetCarByCarId(int CarId) {
+        /*[HttpGet("/{CarIdLinq}")]
+        public async Task<Result1DTO> GetCarByCarIdLinq(int CarIdLinq) {
 
-            return await _dbService.GetCarByCarId(CarId);
+            return await _dbService.GetCarByCarIdLinq(CarIdLinq);
+        }*/
+
+        [HttpGet("/{CarIdSql}")]
+        public async Task<IActionResult> GetCarByCarIdSQL(int CarIdSql) {
+
+            var result = await _dbService.GetCarByCarIdSQL(CarIdSql);
+            if (result.httpStatusCode == System.Net.HttpStatusCode.OK)
+                return Ok();
+
+            else return NotFound();
         }
     }
 }

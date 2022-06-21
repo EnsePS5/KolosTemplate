@@ -17,5 +17,10 @@ namespace KolosTemplate.DTO {
         public int Insurence { get; set; }
 
         public HttpStatusCode httpStatusCode { get; set; }
+
+        public Result1DTO() {
+
+            PersonsDTO = new HashSet<PersonDTO>();
+        }
     }
 }

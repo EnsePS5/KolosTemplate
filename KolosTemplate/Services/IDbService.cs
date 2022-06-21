@@ -9,6 +9,8 @@ namespace KolosTemplate.Services {
     public interface IDbService {
 
 
-        Task<Result1DTO> GetCarByCarId(int CarId);
+        //Task<Result1DTO> GetCarByCarIdLinq(int CarId);
+
+        Task<Result1DTO> GetCarByCarIdSQL(int CarId);
     }
 }
