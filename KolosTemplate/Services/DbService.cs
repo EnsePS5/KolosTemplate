@@ -2,6 +2,8 @@ using KolosTemplate.DTO;
 using KolosTemplate.Entities;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using System.Collections;
+using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
 using System.Threading.Tasks;
@@ -18,10 +20,70 @@ namespace KolosTemplate.Services {
             _carPersonsDbContext = context;
         }
 
+        public async Task<Result3DTO> DeleteOwnerFromCar(int CarId, int OwnerId) {
+
+            Result3DTO result = new Result3DTO {
+                mes = "removed sucessfuly",
+                isDone = true
+            };
+
+            var susOwner = _carPersonsDbContext.CarPersons.Where(x => x.IdCar == CarId && x.IdPerson == OwnerId).FirstOrDefault();
+
+            if (susOwner == null) {
+                result.mes = "There is not such connection";
+                result.isDone = false;
+                return result;
+            }
+
+            _carPersonsDbContext.CarPersons.Remove(susOwner);
+
+            await _carPersonsDbContext.SaveChangesAsync();
+            return result;
+        }
+
+        public async Task<Result2DTO> AddNewCarLinq(CarDTO carDTO)
+        {
+            Result2DTO result = new Result2DTO();
+            result.isDone = true;
+            //Sprawdzam czy wlasciciel istnieje w bazie danych
+
+            foreach (var owner in carDTO.OwnersId) {
+                if (_carPersonsDbContext.Persons.Where(x => x.IdPerson == owner).FirstOrDefault() == null) {
+                    result.isDone = false;
+                    return result;
+                }
+            }
+
+            await _carPersonsDbContext.Cars.AddAsync(new Car
+            {
+                Make = carDTO.Make,
+                ProductionYear = carDTO.ProductionYear
+            });
+
+            await _carPersonsDbContext.SaveChangesAsync();
+
+            int val = await _carPersonsDbContext.Cars.MaxAsync(x => x.IdCar);
+
+            foreach (var owner in carDTO.OwnersId) {
+                await _carPersonsDbContext.CarPersons.AddAsync(new CarPerson { 
+                    IdCar = val,
+                    IdPerson = owner,
+                    MainOwner = (byte)(carDTO.MainOwnerId == owner ? 1 : 0)
+                });
+            }
+
+            await _carPersonsDbContext.SaveChangesAsync();
+
+            return result;
+
+        }
+
+
+
         //Koncowka uzywajac linq
         public async Task<Result1DTO> GetCarByCarIdLinq(int CarId)
         {
-            if (_carPersonsDbContext.Cars.Where(x => x.IdCar == CarId) == null)
+            if (_carPersonsDbContext.Cars.FirstOrDefault(x => x.IdCar == CarId) == null)
                 return new Result1DTO { httpStatusCode = System.Net.HttpStatusCode.BadRequest};
 
             return await _carPersonsDbContext.Cars.Include(x => x.CarPersons).ThenInclude(x => x.IdPersonNavigation)
@@ -124,5 +186,6 @@ namespace KolosTemplate.Services {
             return MainOwner == 1 ? !string.IsNullOrEmpty(DrivingLicense) ? ProductionYear - 300 : ProductionYear + 200 : -1;
 
         }
+
     }
 }
